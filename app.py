@@ -34,7 +34,7 @@ if uploaded_file is not None:
     prediction_idx = model.predict(features)[0]
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Fallback logic: if not Tampered or known scanner, label as Authentic
+    # Fallback logic: if prediction is not 'Tampered' and not a known scanner, label as 'Authentic'
     known_scanners = [label for label in le.classes_ if label != 'Tampered']
     if prediction_label not in known_scanners and prediction_label != 'Tampered':
         prediction_label = 'Authentic'
