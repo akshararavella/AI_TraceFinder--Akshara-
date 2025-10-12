@@ -30,15 +30,17 @@ if uploaded_file is not None:
     # Prepare feature vector
     features = np.array([[fft_mean, fft_std]])
 
-    # Predict
-    prediction_idx = model.predict(features)[0]
+    # Predict probabilities
+    probs = model.predict_proba(features)[0]
+    max_prob = np.max(probs)
+    prediction_idx = np.argmax(probs)
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Map prediction to display label
+    # Map prediction to display label with confidence threshold
     scanner_labels = [label for label in le.classes_ if label != 'Tampered']
-    if prediction_label == 'Tampered':
+    if prediction_label == 'Tampered' and max_prob >= 0.6:
         display_label = "Tampered"
-    elif prediction_label in scanner_labels:
+    elif prediction_label in scanner_labels and max_prob >= 0.6:
         display_label = "Flatfield Scanner"
     else:
         display_label = "Unknown"
@@ -46,3 +48,4 @@ if uploaded_file is not None:
     # Display result
     st.markdown("## 🔍 Analysis Result")
     st.markdown(f"### 🧠 Predicted Class: **{display_label}**")
+    st.markdown(f"**Confidence:** {max_prob * 100:.2f}%")
