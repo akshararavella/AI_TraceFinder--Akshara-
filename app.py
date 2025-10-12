@@ -15,7 +15,7 @@ uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg", 
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert('L')  # Convert to grayscale
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 
     # Convert image to numpy array
     img_np = np.array(image)
@@ -34,10 +34,15 @@ if uploaded_file is not None:
     prediction_idx = model.predict(features)[0]
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Fallback logic: if prediction is not 'Tampered' and not a known scanner, label as 'Authentic'
-    known_scanners = [label for label in le.classes_ if label != 'Tampered']
-    if prediction_label not in known_scanners and prediction_label != 'Tampered':
-        prediction_label = 'Authentic'
+    # Map prediction to display label
+    scanner_labels = [label for label in le.classes_ if label != 'Tampered']
+    if prediction_label == 'Tampered':
+        display_label = "Tampered"
+    elif prediction_label in scanner_labels:
+        display_label = "Flatfield Scanner"
+    else:
+        display_label = "Unknown"
 
     # Display result
-    st.markdown(f"### 🧠 Prediction: **{prediction_label}**")
+    st.markdown("## 🔍 Analysis Result")
+    st.markdown(f"### 🧠 Predicted Class: **{display_label}**")
