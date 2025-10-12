@@ -43,7 +43,7 @@ if uploaded_file is not None:
     elif prediction_label in scanner_labels and max_prob >= 0.6:
         display_label = "Flatfield Scanner"
     else:
-        display_label = "Unknown"
+        display_label = "Authentic"
 
     # Display result
     st.markdown("## 🔍 Analysis Result")
