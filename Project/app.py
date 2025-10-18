@@ -3,10 +3,11 @@ from PIL import Image
 import numpy as np
 import joblib
 import io
+import pandas as pd
 
-# Load model and label encoder
-model = joblib.load("LGBM_model_final.joblib")
-le = joblib.load("LGBM_label_encoder_final.joblib")
+# Load model and label encoder from project/models/
+model = joblib.load("project/models/LGBM_model_final.joblib")
+le = joblib.load("project/models/LGBM_label_encoder_final.joblib")
 
 st.title("🕵️‍♂️ AI TraceFinder: Image Forensics")
 st.markdown("Upload an image to detect its source or authenticity.")
@@ -41,3 +42,19 @@ if uploaded_file is not None:
 
     # Display result
     st.markdown(f"### 🧠 Prediction: **{prediction_label}**")
+
+    # Prepare result for download
+    result_df = pd.DataFrame({
+        "Filename": [uploaded_file.name],
+        "Prediction": [prediction_label],
+        "FFT Mean": [fft_mean],
+        "FFT Std": [fft_std]
+    })
+
+    csv = result_df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📥 Download Result as CSV",
+        data=csv,
+        file_name="tracefinder_result.csv",
+        mime="text/csv"
+    )
