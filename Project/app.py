@@ -4,9 +4,9 @@ import numpy as np
 import joblib
 import pandas as pd
 
-# Load model and label encoder from models/
-model = joblib.load("models/LGBM_model_final.joblib")
-le = joblib.load("models/LGBM_label_encoder_final.joblib")
+# Load model and label encoder from Project/models/
+model = joblib.load("Project/models/LGBM_model_final.joblib")
+le = joblib.load("Project/models/LGBM_label_encoder_final.joblib")
 
 st.title("🕵️‍♂️ AI TraceFinder: Image Forensics")
 st.markdown("Upload an image to detect its source or authenticity.")
@@ -34,13 +34,19 @@ if uploaded_file is not None:
     prediction_idx = model.predict(features)[0]
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Map detailed labels to high-level categories
-    if prediction_label == 'Tampered':
+    # Threshold-based logic (adjust these based on your data)
+    tamper_threshold_std = 2500  # example value — tune based on your dataset
+    authentic_sources = ['Original', 'Authentic']
+    known_scanners = [label for label in le.classes_ if label not in ['Tampered'] + authentic_sources]
+
+    if fft_std > tamper_threshold_std:
         final_label = 'Tampered'
-    elif prediction_label in ['Original', 'Authentic']:
+    elif prediction_label in authentic_sources:
         final_label = 'Authentic'
+    elif prediction_label in known_scanners:
+        final_label = 'Original'
     else:
-        final_label = 'Original'  # Treat all scanner names as 'Original'
+        final_label = 'Authentic'  # fallback if label is unknown but FFT looks clean
 
     # Display result
     st.markdown(f"### 🧠 Prediction: **{final_label}**")
