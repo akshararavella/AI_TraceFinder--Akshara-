@@ -43,22 +43,25 @@ if uploaded_file:
     prediction_idx = np.argmax(probs)
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Map prediction to display label
+    # Map prediction to display label with lowered confidence threshold
     scanner_labels = [label for label in le.classes_ if label != 'Tampered']
-    if prediction_label == 'Tampered' and max_prob >= 0.6:
+    if prediction_label == 'Tampered' and max_prob >= 0.4:
         display_label = "Tampered"
-    elif prediction_label in scanner_labels and max_prob >= 0.6:
+        color = "#FF4B4B"  # Red
+    elif prediction_label in scanner_labels and max_prob >= 0.4:
         display_label = "Flatfield Scanner"
+        color = "#B36BFF"  # Purple
     else:
         display_label = "Authentic"
+        color = "#4CAF50"  # Green
 
     # Display results
     st.markdown("## 🔍 Analysis Result")
     st.markdown(
         f"""
-        <div style='padding:24px;border-radius:12px;background:#181929;border:2px solid #6a7ff7;'>
-            <div style='font-size:22px;color:#7B98EE;'>🖨️ Scanner Prediction</div>
-            <div style='font-size:32px;margin-top:10px;font-weight:bold;'>{display_label}</div>
+        <div style='padding:24px;border-radius:12px;background:#181929;border:2px solid {color};'>
+            <div style='font-size:22px;color:{color};'>🖨️ Scanner Prediction</div>
+            <div style='font-size:32px;margin-top:10px;font-weight:bold;color:{color};'>{display_label}</div>
             <div style='font-size:16px;color:#d7a6ff;margin-top:14px;'>🎯 Confidence: <b>{max_prob * 100:.2f}%</b></div>
         </div>
         """,
