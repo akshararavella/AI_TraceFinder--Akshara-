@@ -4,9 +4,9 @@ import numpy as np
 import joblib
 import pandas as pd
 
-# Load model and label encoder from models/ (relative to Project/)
-model = joblib.load("models/LGBM_model_final.joblib")
-le = joblib.load("models/LGBM_label_encoder_final.joblib")
+# Load model and label encoder from Project/models/
+model = joblib.load("Project/models/LGBM_model_final.joblib")
+le = joblib.load("Project/models/LGBM_label_encoder_final.joblib")
 
 st.title("🕵️‍♂️ AI TraceFinder: Image Forensics")
 st.markdown("Upload an image to detect its source or authenticity.")
