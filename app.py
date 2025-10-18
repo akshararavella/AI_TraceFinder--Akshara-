@@ -68,8 +68,11 @@ if uploaded_file:
         unsafe_allow_html=True
     )
 
-    # Show class probabilities for debugging
-    st.markdown("### 🔬 Class Probabilities")
+    # Debug panel: raw prediction and class probabilities
+    st.markdown("### 🧪 Raw Model Output")
+    st.write(f"Predicted label: {prediction_label}")
+    st.write(f"Confidence: {max_prob:.4f}")
+    st.write("Class probabilities:")
     st.write(dict(zip(le.classes_, [round(p * 100, 2) for p in probs])))
 
     # Prepare CSV result
