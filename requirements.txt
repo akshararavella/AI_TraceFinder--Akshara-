@@ -7,3 +7,4 @@ opencv-python
 pywavelets
 pillow
 scikit-image
+pandas
