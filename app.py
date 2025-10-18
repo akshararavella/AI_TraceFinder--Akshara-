@@ -43,12 +43,11 @@ if uploaded_file:
     prediction_idx = np.argmax(probs)
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Map prediction to display label with lowered confidence threshold
-    scanner_labels = [label for label in le.classes_ if label != 'Tampered']
-    if prediction_label == 'Tampered' and max_prob >= 0.4:
+    # Map prediction to display label and color
+    if prediction_label == 'Tampered':
         display_label = "Tampered"
         color = "#FF4B4B"  # Red
-    elif prediction_label in scanner_labels and max_prob >= 0.4:
+    elif prediction_label in le.classes_:
         display_label = "Flatfield Scanner"
         color = "#B36BFF"  # Purple
     else:
