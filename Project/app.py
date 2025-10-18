@@ -2,7 +2,6 @@ import streamlit as st
 from PIL import Image
 import numpy as np
 import joblib
-import io
 import pandas as pd
 
 # Load model and label encoder from project/models/
@@ -35,18 +34,21 @@ if uploaded_file is not None:
     prediction_idx = model.predict(features)[0]
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Fallback logic: if prediction is not 'Tampered' and not a known scanner, label as 'Authentic'
-    known_scanners = [label for label in le.classes_ if label != 'Tampered']
-    if prediction_label not in known_scanners and prediction_label != 'Tampered':
-        prediction_label = 'Authentic'
+    # Map detailed labels to high-level categories
+    if prediction_label == 'Tampered':
+        final_label = 'Tampered'
+    elif prediction_label in ['Original', 'Authentic']:
+        final_label = 'Authentic'
+    else:
+        final_label = 'Original'  # Treat all scanner names as 'Original'
 
     # Display result
-    st.markdown(f"### 🧠 Prediction: **{prediction_label}**")
+    st.markdown(f"### 🧠 Prediction: **{final_label}**")
 
     # Prepare result for download
     result_df = pd.DataFrame({
         "Filename": [uploaded_file.name],
-        "Prediction": [prediction_label],
+        "Prediction": [final_label],
         "FFT Mean": [fft_mean],
         "FFT Std": [fft_std]
     })
