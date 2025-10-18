@@ -4,65 +4,79 @@ import numpy as np
 import joblib
 import pandas as pd
 
-# Load model and label encoder from models/ (relative to Project/)
-model = joblib.load("models/LGBM_model_final.joblib")
-le = joblib.load("models/LGBM_label_encoder_final.joblib")
+# Load model and label encoder
+model = joblib.load("LGBM_model_final.joblib")
+le = joblib.load("LGBM_label_encoder_final.joblib")
 
-st.title("🕵️‍♂️ AI TraceFinder: Image Forensics")
-st.markdown("Upload an image to detect its source or authenticity.")
+# App title and header
+st.set_page_config(page_title="🔍 TraceFinder", page_icon="🔍", layout="wide")
+st.markdown(
+    """
+    <div style='text-align:center; padding-top:16px;'>
+        <h1>🔍 TraceFinder</h1>
+        <h4 style='color:#6a7ff7;'>Scanner Identification & Tamper Detection 🖨️</h4>
+        <p style='color:#aaaaff; font-size:20px;'>Upload a scanned image below 👇</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg", "tif", "tiff"])
+uploaded_file = st.file_uploader("📁 Upload scanned image (PNG/JPG/JPEG/TIF/TIFF)", type=["png", "jpg", "jpeg", "tif", "tiff"])
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert('L')  # Convert to grayscale
-    st.image(image, caption="Uploaded Image", use_column_width=True)
-
-    # Convert image to numpy array
+def extract_fft_features(image):
     img_np = np.array(image)
-
-    # Compute FFT features
     fft = np.fft.fft2(img_np)
     fft_shift = np.fft.fftshift(fft)
     magnitude = np.abs(fft_shift)
     fft_mean = np.mean(magnitude)
     fft_std = np.std(magnitude)
+    return np.array([[fft_mean, fft_std]])
 
-    # Prepare feature vector
-    features = np.array([[fft_mean, fft_std]])
+if uploaded_file:
+    image = Image.open(uploaded_file).convert('L')
+    st.image(image, caption="🖼️ Uploaded Image", use_container_width=True)
 
-    # Predict using model
-    prediction_idx = model.predict(features)[0]
+    # Extract features and predict
+    features = extract_fft_features(image)
+    probs = model.predict_proba(features)[0]
+    max_prob = np.max(probs)
+    prediction_idx = np.argmax(probs)
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Threshold-based logic to infer tampering
-    tamper_threshold_std = 2500  # You can tune this based on your dataset
-    authentic_sources = ['Original', 'Authentic']
-    known_scanners = [label for label in le.classes_ if label not in ['Tampered'] + authentic_sources]
-
-    if fft_std > tamper_threshold_std:
-        final_label = 'Tampered'
-    elif prediction_label in authentic_sources:
-        final_label = 'Authentic'
-    elif prediction_label in known_scanners:
-        final_label = 'Original'
+    # Map prediction to display label
+    scanner_labels = [label for label in le.classes_ if label != 'Tampered']
+    if prediction_label == 'Tampered' and max_prob >= 0.6:
+        display_label = "Tampered"
+    elif prediction_label in scanner_labels and max_prob >= 0.6:
+        display_label = "Flatfield Scanner"
     else:
-        final_label = 'Authentic'  # fallback if label is unknown but FFT looks clean
+        display_label = "Authentic"
 
-    # Display result
-    st.markdown(f"### 🧠 Prediction: **{final_label}**")
+    # Display results
+    st.markdown("## 🔍 Analysis Result")
+    st.markdown(
+        f"""
+        <div style='padding:24px;border-radius:12px;background:#181929;border:2px solid #6a7ff7;'>
+            <div style='font-size:22px;color:#7B98EE;'>🖨️ Scanner Prediction</div>
+            <div style='font-size:32px;margin-top:10px;font-weight:bold;'>{display_label}</div>
+            <div style='font-size:16px;color:#d7a6ff;margin-top:14px;'>🎯 Confidence: <b>{max_prob * 100:.2f}%</b></div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    # Prepare result for download
+    # Prepare CSV result
     result_df = pd.DataFrame({
-        "Filename": [uploaded_file.name],
-        "Prediction": [final_label],
-        "FFT Mean": [fft_mean],
-        "FFT Std": [fft_std]
+        "File": [uploaded_file.name],
+        "Predicted Class": [display_label],
+        "Confidence (%)": [round(max_prob * 100, 2)]
     })
 
-    csv = result_df.to_csv(index=False).encode('utf-8')
     st.download_button(
-        label="📥 Download Result as CSV",
-        data=csv,
-        file_name="tracefinder_result.csv",
+        label="📥 Download Results as CSV",
+        data=result_df.to_csv(index=False),
+        file_name="tracefinder_results.csv",
         mime="text/csv"
     )
+else:
+    st.info("💡 Drag-and-drop or browse to upload and analyze.")
