@@ -4,9 +4,9 @@ import numpy as np
 import joblib
 import pandas as pd
 
-# Load model and label encoder from Project/models/
-model = joblib.load("Project/models/LGBM_model_final.joblib")
-le = joblib.load("Project/models/LGBM_label_encoder_final.joblib")
+# Load model and label encoder from models/ (relative to Project/)
+model = joblib.load("models/LGBM_model_final.joblib")
+le = joblib.load("models/LGBM_label_encoder_final.joblib")
 
 st.title("🕵️‍♂️ AI TraceFinder: Image Forensics")
 st.markdown("Upload an image to detect its source or authenticity.")
@@ -30,12 +30,12 @@ if uploaded_file is not None:
     # Prepare feature vector
     features = np.array([[fft_mean, fft_std]])
 
-    # Predict
+    # Predict using model
     prediction_idx = model.predict(features)[0]
     prediction_label = le.inverse_transform([prediction_idx])[0]
 
-    # Threshold-based logic (adjust these based on your data)
-    tamper_threshold_std = 2500  # example value — tune based on your dataset
+    # Threshold-based logic to infer tampering
+    tamper_threshold_std = 2500  # You can tune this based on your dataset
     authentic_sources = ['Original', 'Authentic']
     known_scanners = [label for label in le.classes_ if label not in ['Tampered'] + authentic_sources]
 
