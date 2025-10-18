@@ -68,6 +68,10 @@ if uploaded_file:
         unsafe_allow_html=True
     )
 
+    # Show class probabilities for debugging
+    st.markdown("### 🔬 Class Probabilities")
+    st.write(dict(zip(le.classes_, [round(p * 100, 2) for p in probs])))
+
     # Prepare CSV result
     result_df = pd.DataFrame({
         "File": [uploaded_file.name],
